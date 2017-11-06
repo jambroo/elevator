@@ -1,6 +1,6 @@
 'use strict'
 
-class Actor {
+class User {
   constructor(name, floor, destination) {
     this.name = name;
     this.floor = floor;
@@ -9,7 +9,7 @@ class Actor {
   }
 
   call(elevator) {
-    console.log(`Actor at ${this.floor} is calling elevator to go ${this.destination}.`);
+    console.log(`User at ${this.floor} is calling elevator to go ${this.destination}.`);
 
     return elevator.call(this);
   }
@@ -25,12 +25,12 @@ class Actor {
 
   board(elevator) {
     this.floor = elevator.floor;
-    console.log(`Actor ${this.name} getting on elevator at ${this.floor}. Pressed button ${this.destination}.`);
+    console.log(`User ${this.name} getting on elevator at ${this.floor}. Pressed button ${this.destination}.`);
   }
 
   disembark(elevator) {
     this.floor = elevator.floor;
-    console.log(`Actor ${this.name} getting off elevator at floor ${this.floor}.`);
+    console.log(`User ${this.name} getting off elevator at floor ${this.floor}.`);
   }
 
   display() {
@@ -50,19 +50,19 @@ class Elevator {
     this.process = [];
   }
 
-  call(actor) {
-    if (actor.floor == this.floor) {
+  call(user) {
+    if (user.floor == this.floor) {
       console.log("Elevator already on this floor!");
       return false;
     }
 
-    let directionTo = (actor.destination > actor.floor) ? 'UP' : 'DOWN';
-    console.log(`Elevator requested to move ${directionTo} to ${actor.floor}. Elevator currently at ${this.floor}.`);
+    let directionTo = (user.destination > user.floor) ? 'UP' : 'DOWN';
+    console.log(`Elevator requested to move ${directionTo} to ${user.floor}. Elevator currently at ${this.floor}.`);
 
-    this.requests.push({floor: actor.floor, destination: actor.destination, actor});
+    this.requests.push({floor: user.floor, destination: user.destination, user});
 
     let requests = this.requests.map(r => {
-      return `${r.actor.name}:${r.floor}-${r.destination}`
+      return `${r.user.name}:${r.floor}-${r.destination}`
     });
     console.log(`Current requests queue: ${requests.join(",")}.`);
 
@@ -74,7 +74,7 @@ class Elevator {
     console.log(`Elevator passengers: ${JSON.stringify(this.passengers)}.`);
     console.log(`Elevator floor: ${this.floor}.`);
     let requests = this.requests.map(r => {
-      return `${r.actor.name}:${r.floor}-${r.destination}`
+      return `${r.user.name}:${r.floor}-${r.destination}`
     });
     console.log(`Elevator requests: ${requests.join(",")}.`);
     console.log("---/ELEVATOR-STATE-INFO---");
@@ -130,14 +130,14 @@ class Elevator {
 
       if (next.pickup) {
         this.floor = next.floor;
-        next.actor.board(this);
+        next.user.board(this);
       } else {
         this.floor = next.destination;
-        next.actor.disembark(this);
+        next.user.disembark(this);
 
         // Seomone left so remove their entry from requests
         this.requests = this.requests.filter((r) => {
-          return r.actor != next.actor;
+          return r.user != next.user;
         });
       }
     }
@@ -145,21 +145,21 @@ class Elevator {
   }
 }
 
-let actorJames = new Actor("James", 3, 5);
-let actorJamie = new Actor("Jamie", 4, 11);
-let actorJimmy = new Actor("Jimmy", 2, 1);
-let actorShemus = new Actor("Shemus", 6, 7);
+let userJames = new User("James", 3, 5);
+let userJamie = new User("Jamie", 4, 11);
+let userJimmy = new User("Jimmy", 2, 1);
+let userShemus = new User("Shemus", 6, 7);
 
 let elevator = new Elevator(0);
 
-// Here actor is requesting elevator from level 3 going up to 5
-actorJames.call(elevator);
-// Here actor is requesting elevator from level 4 going up to 5
-actorJamie.call(elevator);
-// Here actor is requesting elevator from level 2 going down to 1
-actorJimmy.call(elevator);
-// Here actor is requesting elevator from level 6 going up to 11
-actorShemus.call(elevator);
+// Here user is requesting elevator from level 3 going up to 5
+userJames.call(elevator);
+// Here user is requesting elevator from level 4 going up to 5
+userJamie.call(elevator);
+// Here user is requesting elevator from level 2 going down to 1
+userJimmy.call(elevator);
+// Here user is requesting elevator from level 6 going up to 11
+userShemus.call(elevator);
 
 elevator.display();
 elevator.move();
