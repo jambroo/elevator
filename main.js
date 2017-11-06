@@ -105,19 +105,11 @@ class Elevator {
       return entry;
     });
 
-    // TODO: Fix this
-    // Copy this pickup list
-    let dropoffs = JSON.parse(JSON.stringify(pickups));
-    dropoffs = dropoffs.map(entry => {
-      entry.pickup = false;
-      // find pickup version
-      let here = unsorted.find((entry2) => {
-        return entry2.actor.name == entry.actor.name;
-      });
-      entry.actor = here.actor;
-
-      return entry;
-    });
+    let dropoffs = pickups.map(entry => {
+      let pickups_cloned = { ... entry };
+      pickups_cloned.pickup = false;
+      return pickups_cloned;
+    })
 
     // Combine pickup and dropoff dictionaries
     this.process = pickups.concat(dropoffs).sort((a, b) => {
