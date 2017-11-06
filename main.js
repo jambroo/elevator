@@ -61,7 +61,10 @@ class Elevator {
 
     this.requests.push({floor: actor.floor, destination: actor.destination, actor});
 
-    console.log(`Current requests queue: ${JSON.stringify(this.requests)}.`);
+    let requests = this.requests.map(r => {
+      return `${r.actor.name}:${r.floor}-${r.destination}`
+    });
+    console.log(`Current requests queue: ${requests.join(",")}.`);
 
     return true;
   }
@@ -70,7 +73,10 @@ class Elevator {
     console.log("---ELEVATOR-STATE-INFO---");
     console.log(`Elevator passengers: ${JSON.stringify(this.passengers)}.`);
     console.log(`Elevator floor: ${this.floor}.`);
-    console.log(`Elevator requests: ${JSON.stringify(this.requests)}.`);
+    let requests = this.requests.map(r => {
+      return `${r.actor.name}:${r.floor}-${r.destination}`
+    });
+    console.log(`Elevator requests: ${requests.join(",")}.`);
     console.log("---/ELEVATOR-STATE-INFO---");
   }
 
