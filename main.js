@@ -11,7 +11,34 @@ class Actor {
   call(elevator) {
     console.log(`Actor at ${this.floor} is calling elevator to go ${this.destination}.`);
 
-    return elevator.call(this.floor, this.destination);
+    return elevator.call(this);
+  }
+
+  setFloor(floor) {
+    this.floor = floor;
+    this.destination = undefined;
+  }
+
+  getName() {
+    return this.name;
+  }
+
+  board(elevator) {
+    this.floor = elevator.floor;
+    console.log(`Actor ${this.name} getting on elevator at ${this.floor}. Pressed button ${this.destination}.`);
+  }
+
+  disembark(elevator) {
+    this.floor = elevator.floor;
+    console.log(`Actor ${this.name} getting off elevator at floor ${this.floor}.`);
+  }
+
+  display() {
+    console.log("---PERSON-STATE-INFO---");
+    console.log(`Person name: ${this.getName()}.`);
+    console.log(`Person floor: ${this.floor}.`);
+    console.log(`Person destination: ${this.destination}.`);
+    console.log("---/PERSON-STATE-INFO---");
   }
 }
 
@@ -23,16 +50,16 @@ class Elevator {
     this.process = [];
   }
 
-  call(requestedFloor, requestedDest) {
-    if (requestedFloor == this.floor) {
+  call(actor) {
+    if (actor.floor == this.floor) {
       console.log("Elevator already on this floor!");
       return false;
     }
 
-    let directionTo = (requestedDest > requestedFloor) ? 'UP' : 'DOWN';
-    console.log(`Elevator requested to move ${directionTo} to ${requestedFloor}. Elevator currently at ${this.floor}.`);
+    let directionTo = (actor.destination > actor.floor) ? 'UP' : 'DOWN';
+    console.log(`Elevator requested to move ${directionTo} to ${actor.floor}. Elevator currently at ${this.floor}.`);
 
-    this.requests.push({floor: requestedFloor, destination: requestedDest});
+    this.requests.push({floor: actor.floor, destination: actor.destination, actor});
 
     console.log(`Current requests queue: ${JSON.stringify(this.requests)}.`);
 
@@ -52,6 +79,7 @@ class Elevator {
     let next = this.requests.shift();
 
     // Should I stop anywhere before the next?
+    // This is concerned with pickups
     let originalDirUp = (next.destination > next.floor);
     // Does this pass current floor (this.floor)
     let sameDirection = this.requests.filter((r) => {
@@ -66,35 +94,63 @@ class Elevator {
 
     let unsorted = [next].concat(sameDirection);
 
-    let sorted = unsorted.sort((a, b) => {
-      return (originalDirUp) ? a.floor - b.floor : b.floor - a.floor;
+    let pickups = unsorted.map(entry => {
+      entry.pickup = true;
+      return entry;
     });
 
-    this.process = sorted;
+    // TODO: Fix this
+    // Copy this pickup list
+    let dropoffs = JSON.parse(JSON.stringify(pickups));
+    dropoffs = dropoffs.map(entry => {
+      entry.pickup = false;
+      // find pickup version
+      let here = unsorted.find((entry2) => {
+        return entry2.actor.name == entry.actor.name;
+      });
+      entry.actor = here.actor;
+
+      return entry;
+    });
+
+    // Combine pickup and dropoff dictionaries
+    this.process = pickups.concat(dropoffs).sort((a, b) => {
+      let floor = (a.pickup) ? a.floor : a.destination;
+      let floor2 = (b.pickup) ? b.floor : b.destination;
+
+      return (originalDirUp) ? floor - floor2 : floor2 - floor;
+    });
 
     let direction = (next.floor > this.floor) ? 'UP' : 'DOWN';
 
     console.log("---ELEVATOR-MOVE-INFO---");
-    console.log(`Elevator moving from ${this.floor} to ${JSON.stringify(this.process.map((p) => { return p.floor }))} in direction ${direction}.`);
-
-    // Get rid of requests that are being processed
-    this.requests = this.requests.filter((r) => {
-      return this.process.indexOf(r) == -1;
-    });
+    console.log(`Elevator moving from ${this.floor} to ${pickups.map((p) => { return p.floor+":"+p.destination })} in direction ${direction}.`);
 
     while (this.process.length > 0) {
       next = this.process.shift();
-      this.floor = next.floor;
       console.log(`Elevator at ${this.floor} *DING*.`);
+
+      if (next.pickup) {
+        this.floor = next.floor;
+        next.actor.board(this);
+      } else {
+        this.floor = next.destination;
+        next.actor.disembark(this);
+
+        // Seomone left so remove their entry from requests
+        this.requests = this.requests.filter((r) => {
+          return r.actor != next.actor;
+        });
+      }
     }
     console.log("---/ELEVATOR-MOVE-INFO---");
   }
 }
 
 let actorJames = new Actor("James", 3, 5);
-let actorJamie = new Actor("Jamie", 4, 5);
+let actorJamie = new Actor("Jamie", 4, 11);
 let actorJimmy = new Actor("Jimmy", 2, 1);
-let actorShemus = new Actor("Shemus", 6, 11);
+let actorShemus = new Actor("Shemus", 6, 7);
 
 let elevator = new Elevator(0);
 
